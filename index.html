@@ -1,0 +1,604 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Healthy life expectancy, flooding and asylum seeker dispersal</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.5.1/dist/leaflet.css" integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin=""/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css" integrity="sha384-oS3vJWv+0UjzBfQzYUhtDYW+Pj2yciDJxpsK1OYPAYjqT085Qq/1cq5FLXAZQ7Ay" crossorigin="anonymous">
+
+    <script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js" integrity="sha512-GffPMF3RvMeYyc1LWMHtK8EbPv0iNZ8/oTtHPx9/cc2ILxQ+u905qIwdpULaqDkyBKgOaB57QTMg7ztg8Jm2Og==" crossorigin=""></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.js"></script>
+
+    <style type="text/css">
+        html, body { width: 100%; height: 100%; margin: 0; font: 10pt "Montserrat", "Helvetica Neue", Arial, Helvetica, sans-serif; }
+        #mapHealth, #mapFlood, #mapAsylum, #mapComposite { width: 49.5%; height: 50%; }
+        #mapHealth, #mapAsylum { float: left; margin-right: 10px; }
+        #mapFlood, #mapComposite { float: right; }
+        #mapAsylum, #mapComposite {margin-top: 10px; }
+
+        .info {
+            padding: 6px 8px;
+            font: 14px/16px Arial, Helvetica, sans-serif;
+            background: white;
+            background: rgba(255,255,255,0.8);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px;
+        }
+        .info h4 {
+            margin: 0 0 5px;
+            color: #777;
+        }
+        .legend {
+            line-height: 18px;
+            color: #555;
+        }
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: 8px;
+            opacity: 0.7;
+        }
+
+         /* The Modal (background) */
+        .modal {
+            display: block; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 2000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgb(0,0,0); /* Fallback color */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        }
+
+         /* Modal Header */
+        .modal-header {
+            padding: 2px 16px;
+            background-color: #5cb85c;
+            color: white;
+        }
+
+        /* Modal Body */
+        .modal-body {padding: 2px 16px;}
+
+        /* Modal Footer */
+        .modal-footer {
+            padding: 2px 16px;
+            background-color: #5cb85c;
+            color: white;
+        }
+
+        /* Modal Content */
+        .modal-content {
+            position: relative;
+            background-color: #fefefe;
+            margin: auto;
+            padding: 0;
+            border: 1px solid #888;
+            width: 80%;
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+            animation-name: animatetop;
+            animation-duration: 0.4s
+        }
+
+        /* Add Animation */
+        @keyframes animatetop {
+            from {top: -300px; opacity: 0}
+            to {top: 0; opacity: 1}
+        } 
+
+        /* The Close Button */
+        .close {
+            color: #ffffff;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover, .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        } 
+
+    </style>
+</head>
+<body>
+    <!-- modal popup -->
+    <div id="myModal" class="modal">
+         <!-- Modal content -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close">&times;</span>
+                <h2>Healthy life expectancy, flooding, and asylum seeker dispersal</h2>
+            </div>
+            <div class="modal-body">
+                <p>This map shows <b>healthy life expectancy</b> (top-left), <b>flooding</b> (top-right), <b>asylum seeker dispersal</b> (bottom-left), and a <b>combined risk</b> of these three indicators (bottom-right) for Local Authorities in the UK. Darker areas have higher risks.</p>
+                <p><a href="assets/flood_displacement_health_risk_data.csv">Download the data behind this map</a></p>
+
+                <h4>Healthy life expectancy</h4>
+                <p>Healthy life expectancy is from the ONS's report on <a href="https://www.ons.gov.uk/peoplepopulationandcommunity/healthandsocialcare/healthandlifeexpectancies/bulletins/healthstatelifeexpectanciesuk/2015to2017#links-to-related-statistics" target="_blank">'Health state life expectancies, UK: 2015 to 2017'</a>. The underlying data are available <a href="https://www.ons.gov.uk/peoplepopulationandcommunity/healthandsocialcare/healthandlifeexpectancies/datasets/healthstatelifeexpectancyatbirthandatage65bylocalareasuk" target="_blank">here</a>.</p>
+
+                <h4>Flooding</h4>
+                <p>Flood risks are calculated from the number of homes currently at risk within each Local Authority. These figures come from <a href="https://friendsoftheearth.uk/climate-change/flood-map-england-and-wales-areas-risk-flooding" target="_blank">Friends of the Earth</a>.</p>
+                
+                <h4>Asylum seeker dispersal</h4>
+                <p>Dispersal, in this instance, refers to the number of asylum seekers receiving Section 95 support in Local Authorities. Data are from the <a href="https://www.gov.uk/government/collections/migration-statistics" target="_blank">Home Office</a>.</p>                        
+
+                <h4>Combined risk</h4>
+                <p>The combined risk map shows Local Authorities that are either the worst-performing or worse-than-average across combinations of healthy life expectancy, flooding, and asylum seeker dispersal.</p>
+                <p>Glasgow City had the highest number of asylum seekers (4,056 people) combined with very low healthy life expectancy (58.1 years). There were no Local Authorities with a high combined risk of flooding and asylum seeker dispersal, nor were there any with a high combined risk of flooding and healthy life expectancy.</p>
+                <p>There were only four Local Authorities with a worse-than-average combined risk of flooding and healthy life expectancy (Great Yearmouth, Isle of Wight, North Norfolk, Southampton). Three Local Authorities had a worse-than-average combined risk of high number of asylum seekers and low healthy life expectancy (Birmingham, Cardiff, Liverpool).</p>
+            </div>
+        </div> 
+    </div>
+
+    <div id="mapHealth"></div>
+    <div id="mapFlood"></div>
+    <div id="mapAsylum"></div>
+    <div id="mapComposite"></div>
+
+    <script src="js/L.Map.Sync.js"></script>
+    <script src="data/lad.js"></script>
+    <!-- <script src="data/dispersal.js"></script>
+    <script src="data/msoa.js"></script> -->
+
+    <script type="text/javascript">
+        /*
+         * Code common to all maps
+         */
+        var ukBounds = [  // fit to boundary of UK: https://gist.github.com/UsabilityEtc/6d2059bd4f0181a98d76
+            [59.478568831926395, -10.8544921875],
+            [49.82380908513249, 2.021484375]
+        ];
+
+        //var tiles_url = 'http://{s}.tile.osm.org/{z}/{x}/{y}.png';  // Open Street Map
+        var tiles_url = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}'; 
+      
+         // colours for map layers
+        function getLayerColour(d) {
+            return d == 1 ? "#FCFDBF" :
+                   d == 2 ? "#FB8861" :
+                   d == 3 ? "#B6367A" :
+                   d == 4 ? "#51127C" :
+                   d == 5 ? "#000004" :
+                            "#ffffff"
+        }
+
+        function writePopup(s) {
+            return "<b>" + s.lad17nm + "</b><br/><br/>" +
+                "Healthy life expectancy (HLE) at birth: " + s.HLE_birth + " years<br/>" +
+                "HLE at age 65: " + s.HLE_65 + " years<br/>" +
+                "HLE risk index (5 is worst): " + s.HLE_birth_q + "<br/><br/>" +
+                
+                "Homes lost to flooding: " + s.HomesLost + "<br/>" +
+                "Flooding risk index (5 is worst): " + s.Flood_q + "<br/><br/>" +
+                
+                "No. people receiving Section 95 support: " + s.Sec95 + "<br/>" +
+                "Displacement risk index (5 is worst): " + s.s95_q + "<br/><br/>"
+        }
+
+        /*
+         * Healthy life expectancy
+         */
+        // style for healthy life expectancy at birth...
+        function healthBirthStyle(feature) {
+            return {
+                fillColor: getLayerColour(feature.properties.HLE_birth_q),
+                weight: 0.5,
+                opacity: 1,
+                color: "white",
+                fillOpacity: 0.7
+            };
+        }
+        //... and HLE at 65
+        function health65Style(feature) {
+            return {
+                fillColor: getLayerColour(feature.properties.HLE_65_q),
+                weight: 0.5,
+                opacity: 1,
+                color: "white",
+                fillOpacity: 0.7
+            };
+        }
+
+        // create map layers and add popups
+        var healthBirthLayer = L.geoJSON(lad, {
+            style: healthBirthStyle
+        }).bindPopup(function(layer) {return writePopup(layer.feature.properties)});
+
+        var health65Layer = L.geoJSON(lad, {
+            style: health65Style
+        }).bindPopup(function(layer) {return writePopup(layer.feature.properties)});
+
+        // basemap
+        var healthTiles = L.tileLayer(tiles_url, {
+            attribution: '',
+            edgeBufferTiles: 2
+        });
+
+        // set up layers for layers control
+        var baseMap = {
+            "Base map": healthTiles
+        };
+
+        var overlayMaps = {
+            "HLE at birth": healthBirthLayer,
+            "HLE at age 65": health65Layer
+        };
+
+        var mapHealth = L.map('mapHealth', {
+            layers: [healthTiles, healthBirthLayer],
+            maxZoom: 10,
+            minZoom: 5,
+            zoomSnap: 0.25
+        });
+
+        L.control.layers(overlayMaps).addTo(mapHealth);
+
+        mapHealth.attributionControl.setPrefix('');
+
+        // legend
+        var legendHealthBirth = L.control({position: "bottomright"});
+
+        legendHealthBirth.onAdd = function (map) {
+
+            var div = L.DomUtil.create('div', 'info legend'),
+                grades = [1, 2, 3, 4, 5],
+                labels = ["67.1 - 70.7 years", "65.1 - 67.1 years", "63.2 - 65.1 years", "60.4 - 63.2 years", "54.3 - 60.4 years"];
+
+            div.innerHTML = "<h4>Healthy life expectancy</h4>" +
+                            "HLE at birth<br/>";
+
+            // loop through our intervals and generate a label with a colored square for each interval
+            for (var i = 0; i < grades.length; i++) {
+                div.innerHTML +=
+                    '<i style="background:' + getLayerColour(grades[i]) + '"></i> ' +
+                    labels[i] + '<br>';
+            }
+
+            return div;
+        };
+
+        // add the legend
+        legendHealthBirth.addTo(mapHealth);
+        var currentLegend = legendHealthBirth;  // track current legend
+
+        // legend for HLE at age 65
+        var legendHealth65 = L.control({position: "bottomright"});
+
+        legendHealth65.onAdd = function (map) {
+
+            var div = L.DomUtil.create('div', 'info legend'),
+                grades = [1, 2, 3, 4, 5],
+                labels = ["12.4 - 14.1 years", "11.4 - 12.4 years", "10.4 - 11.4 years", "9.1 - 10.4 years", "6.7 - 9.1 years"];
+
+            div.innerHTML = "<h4>Healthy life expectancy</h4>" +
+                            "HLE at age 65<br/>";
+
+            // loop through our intervals and generate a label with a colored square for each interval
+            for (var i = 0; i < grades.length; i++) {
+                div.innerHTML +=
+                    '<i style="background:' + getLayerColour(grades[i]) + '"></i> ' +
+                    labels[i] + '<br>';
+            }
+
+            return div;
+        };
+
+        mapHealth.on('baselayerchange', function (eventLayer) {
+            //console.log(eventLayer.name);
+
+            if (eventLayer.name === 'HLE at birth') {
+                mapHealth.removeControl(currentLegend);
+                currentLegend = legendHealthBirth;
+                legendHealthBirth.addTo(mapHealth);
+            }
+            else if  (eventLayer.name === 'HLE at age 65') {
+                mapHealth.removeControl(currentLegend);
+                currentLegend = legendHealth65;
+                legendHealth65.addTo(mapHealth);
+            }
+        });
+
+        /*
+         * Flooding
+         */
+        // style for flooding polygons
+        function floodStyle(feature) {
+            return {
+                fillColor: getLayerColour(feature.properties.Flood_q),
+                weight: 0.5,
+                opacity: 1,
+                color: "white",
+                fillOpacity: 0.7
+            };
+        }
+
+        // hide LADs that don't need to be shown
+        function floodFilter(feature) {
+            if (feature.properties.Flood_q != undefined) return true;
+        }
+
+        var floodLayer = L.geoJSON(lad, {
+            style: floodStyle,
+            filter: floodFilter
+        });
+
+        // add popups
+        floodLayer.eachLayer(function (layer) {
+            layer.bindPopup(writePopup(layer.feature.properties));
+        });
+
+        var floodTiles = L.tileLayer(tiles_url, {
+            attribution: '',
+            edgeBufferTiles: 2
+        });
+
+        var mapFlood = L.map('mapFlood', {
+            layers: [floodTiles],
+            //center: center,
+            maxZoom: 10,
+            minZoom: 5,
+            zoomSnap: 0.25,
+            zoomControl: false
+        });
+
+        mapFlood.attributionControl.setPrefix('');
+
+        // legend
+        var legendFlood = L.control({position: "bottomright"});
+
+        legendFlood.onAdd = function (map) {
+
+            var div = L.DomUtil.create('div', 'info legend'),
+                grades = [1, 2, 3, 4, 5],
+                labels = ["0 - 25", "26 - 86", "87 - 202", "203 - 320", "321 - 478"];
+
+            div.innerHTML = "<h4>Homes lost to flooding</h4>";
+
+            // loop through our intervals and generate a label with a colored square for each interval
+            for (var i = 0; i < grades.length; i++) {
+                div.innerHTML +=
+                    '<i style="background:' + getLayerColour(grades[i]) + '"></i> ' +
+                    labels[i] + '<br>';
+            }
+
+            return div;
+        };
+
+        // add the legend
+        legendFlood.addTo(mapFlood);
+
+        /*
+         * Asylum seeker displacement
+         */
+        // style for asylum seeker dispersal polygons
+        function asylumStyle(feature) {
+            return {
+                fillColor: getLayerColour(feature.properties.s95_q),
+                weight: 0.5,
+                opacity: 1,
+                color: "white",
+                fillOpacity: 0.7
+            };
+        }
+
+        // hide LADs that don't need to be shown
+        function asylumFilter(feature) {
+            if (feature.properties.s95_q > 0) return true;
+        }
+
+        var asylumLayer = L.geoJSON(lad, {
+            style: asylumStyle,
+            filter: asylumFilter
+        });
+
+        // add popups
+        asylumLayer.eachLayer(function (layer) {
+            layer.bindPopup(writePopup(layer.feature.properties));
+        });
+
+        var asylumTiles = L.tileLayer(tiles_url, {
+            attribution: '',
+            edgeBufferTiles: 2
+        });
+
+        var mapAsylum = L.map('mapAsylum', {
+            layers: [asylumTiles],
+            //center: center,
+            maxZoom: 10,
+            minZoom: 5,
+            zoomSnap: 0.25,
+            zoomControl: false
+        });
+
+        mapAsylum.attributionControl.setPrefix('');
+
+        // legend
+        var legendAsylum = L.control({position: "bottomright"});
+
+        legendAsylum.onAdd = function (map) {
+
+            var div = L.DomUtil.create('div', 'info legend'),
+                grades = [1, 2, 3, 4, 5],
+                labels = ["0 - 172", "173 - 598", "599 - 1,089", "1,090 - 1,596", "1,597 - 4,056"];
+
+            div.innerHTML = "<h4>Asylum seeker dispersal</h4>" +
+                            "No. people receiving Section 96 support<br/>";
+
+            // loop through our intervals and generate a label with a colored square for each interval
+            for (var i = 0; i < grades.length; i++) {
+                div.innerHTML +=
+                    '<i style="background:' + getLayerColour(grades[i]) + '"></i> ' +
+                    labels[i] + '<br>';
+            }
+
+            return div;
+        };
+
+        // add the legend
+        legendAsylum.addTo(mapAsylum);
+
+        /*
+         * Composite risk
+         */
+         function getCompositeColour(d) {
+            return d == "WorstAsylumHLE" ? "#1b9e77" :
+                   d == "FloodHLE"       ? "#d95f02" :
+                   d == "AsylumHLE"      ? "#7570b3" :
+                                           "#ffffff"
+        }
+
+        // style for composite risk polygons
+        function compositeStyle(feature) {
+            return {
+                fillColor: getCompositeColour(feature.properties.Composite_q),
+                weight: 0.25,
+                opacity: 1,
+                color: getCompositeColour(feature.properties.Composite_q),
+                fillOpacity: 1
+            };
+        }
+
+        // hide LADs that don't need to be shown
+        function compositeFilter(feature) {
+            if (feature.properties.Composite_q != "") return true;
+        }
+
+        var compositeLayer = L.geoJSON(lad, {
+            style: compositeStyle,
+            filter: compositeFilter
+        });
+
+        // add popups
+        compositeLayer.eachLayer(function (layer) {
+            layer.bindPopup(writePopup(layer.feature.properties));
+        });
+
+        var compositeTiles = L.tileLayer(tiles_url, {
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            edgeBufferTiles: 2
+        });
+
+        var mapComposite = L.map('mapComposite', {
+            layers: [compositeTiles],
+            //center: center,
+            maxZoom: 10,
+            minZoom: 5,
+            zoomSnap: 0.25,
+            zoomControl: false
+        });
+
+        // legend
+        var legendComposite = L.control({position: "bottomright"});
+
+        legendComposite.onAdd = function (map) {
+
+            var div = L.DomUtil.create('div', 'info legend'),
+                grades = ["WorstAsylumHLE", "AsylumHLE", "FloodHLE"],
+                labels = ["Highest asylum & lowest HLE", "Worse than average asylum & HLE", "Worse than average flooding & HLE"];
+
+            div.innerHTML = "<h4>Combined risk</h4>";
+
+            // loop through our intervals and generate a label with a colored square for each interval
+            for (var i = 0; i < grades.length; i++) {
+                div.innerHTML +=
+                    '<i style="background:' + getCompositeColour(grades[i]) + '"></i> ' +
+                    labels[i] + '<br>';
+            }
+
+            return div;
+        };
+
+        // add the legend
+        legendComposite.addTo(mapComposite);
+
+        /*
+        * Set up all maps
+        */
+        // centre on UK
+        mapHealth.fitBounds(ukBounds);
+        mapFlood.fitBounds(ukBounds);
+        mapAsylum.fitBounds(ukBounds);
+        mapComposite.fitBounds(ukBounds);
+
+        // add data layers
+        floodLayer.addTo(mapFlood);
+        //healthLayer.addTo(mapHealth);
+        asylumLayer.addTo(mapAsylum);
+        compositeLayer.addTo(mapComposite);
+
+        // sync maps so they all move together
+        mapHealth.sync(mapFlood);
+        mapHealth.sync(mapAsylum);
+        mapHealth.sync(mapComposite);
+
+        mapFlood.sync(mapHealth);
+        mapFlood.sync(mapAsylum);
+        mapFlood.sync(mapComposite);
+
+        mapAsylum.sync(mapHealth);
+        mapAsylum.sync(mapFlood);
+        mapAsylum.sync(mapComposite);
+
+        mapComposite.sync(mapHealth);
+        mapComposite.sync(mapFlood);
+        mapComposite.sync(mapAsylum);
+
+        /*
+         * legend - add to the bottom-right map (mapComposite)
+         */
+        
+
+        /*
+         * Info button
+         */
+        var modal = document.getElementById("myModal");  // modal <div>
+        var span = document.getElementsByClassName("close")[0];  // <span> element that closes the modal
+
+        var helpButton = L.easyButton({
+            states: [{
+                    stateName: 'show-modal',        // name the state
+                    icon:      'fa-question',               // and define its properties
+                    title:     'Show information about this map',      // like its title
+                    onClick: function(btn, map) {       // and its callback
+                        modal.style.display = "block";
+                        btn.state('hide-modal');    // change state on click!
+                    }
+                }, {
+                    stateName: 'hide-modal',
+                    icon:      'fa-question',
+                    title:     '',
+                    onClick: function(btn, map) {
+                        modal.style.display = "none";
+                        btn.state('show-modal');
+                    }
+            }]
+        });
+
+        helpButton.addTo(mapHealth);
+
+        // L.easyButton('fa-question', function(btn, map){
+        //     modal.style.display = "block";
+        // }).addTo(mapHealth);
+
+        // When the user clicks on <span> (x), close the modal
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        // When the user clicks anywhere outside of the modal, close it
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        } 
+
+    </script>
+</body>
+</html>
